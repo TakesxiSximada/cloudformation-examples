@@ -1,0 +1,41 @@
+Description: >
+
+  AWS Senario 01 http://docs.aws.amazon.com/ja_jp/AmazonVPC/latest/UserGuide/VPC_Scenario1.html
+
+Parameters:
+
+  TemplateURL:
+    Description: CloudFormation Template URL on S3.
+    Type: String
+
+Resources:
+
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateURL}/templates/scenario01/vpc.yml
+      Parameters:
+        EnvironmentName:    !Ref AWS::StackName
+        VpcCIDR:            10.180.0.0/16
+        PublicSubnet1CIDR:  10.180.8.0/21
+
+
+  SecurityGroups:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateURL}/templates/scenario01/security-groups.yml
+      Parameters:
+        EnvironmentName: !Ref AWS::StackName
+        VPC:             !GetAtt VPC.Outputs.VPC
+
+
+  EC2:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateURL}/templates/scenario01/ec2.yml
+      Parameters:
+        EnvironmentName: !Ref AWS::StackName
+        InstanceType: t2.micro
+        ClusterSize: 1
+        SecurityGroup: !GetAtt SecurityGroups.Outputs.WebServerSG
+        Subnet: !GetAtt VPC.Outputs.PublicSubnet1
